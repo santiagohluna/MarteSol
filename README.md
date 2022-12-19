@@ -1,2 +1,2 @@
 # MARTESOLWIN
-A program to comput Sun's horizontal coordinates from a set of poditions on Mars' surface
+A program to compute Sun's horizontal coordinates from a set of positions on Mars' surface
