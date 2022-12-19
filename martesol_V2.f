@@ -3,13 +3,13 @@ C=======================================================================
 C-----------------------------------------------------------------------
       IMPLICIT NONE
 C-----------------------------------------------------------------------
-      INTEGER DD,MM,YY,HR,MIN,K,FEOF,NP,KMAX,IFROT
+      INTEGER DD,MM,YY,HR,MIN,K,FEOF,NP,KMAX,IFROT,TIMENUM
       PARAMETER ( NP = 10000000 )
-      REAL*8 PI,RADM,SEGS,LAT,COLAT(NP),LONG,ELONG(NP),H,Z(NP),JD,D,T,
+      REAL*8 PI,RADM,SEGS,LAT(NP),COLAT(NP),LONG(NP),ELONG(NP),H(NP),
      &       THETA,ZETA,XI,R(3),RME(3),RMM(3),RS(3),RSH(3),AC,PYTHAG,
-     &       ALT,DMS,UAKM,RMME(3),RMMZ(3),RSLG(3),RSLT(3),DATENUM,EPSE,
-     &       JDI,JDF,JD0,DT,LAM,HROT(3),OBL,OBL0,I,OM,FDT,THP,PROT,
-     &       HROTEA(3),HROTI(3),HROTO(3),
+     &       Z(NP),JD,D,T,ALT,DMS,UAKM,RMME(3),RMMZ(3),RSLG(3),RSLT(3),
+     &       DATENUM,EPSE,JDI,JDF,JD0,DT,LAM,HROT(3),OBL,OBL0,I,OM,FDT,
+     &       THP,PROT,HROTEA(3),HROTI(3),HROTO(3),
      &       XPNE,YPNE,ZPNE,XPNI,YPNI,ZPNI,XPNEI,YPNEI,
      &       ZPNEI,XPNO,YPNO,ZPNO
       CHARACTER*200 ARG,ALGO,PATHOUT
@@ -67,7 +67,7 @@ C-----------------------------------------------------------------------
       PRINT *, 'PROCESANDO ARCHIVO "'//TRIM(ARG)//'"'
       DO WHILE(FEOF.EQ.0)
 C      -----------------------------------------------------------------
-       READ(11,*,IOSTAT=FEOF) LONG,LAT,H
+       READ(11,*,IOSTAT=FEOF) LONG(K),LAT(K),H(K)
 C      -----------------------------------------------------------------
        IF (FEOF.GT.0) THEN
         PRINT *,'REVISAR ARCHIVO DE ENTRADA'
@@ -77,21 +77,21 @@ C      -----------------------------------------------------------------
         EXIT
        ELSE
 C      -----------------------------------------------------------------
-        IF (LAT.GE.0.D0) THEN
-         COLAT(K) = 90.D0 - LAT
+        IF (LAT(K).GE.0.D0) THEN
+         COLAT(K) = 90.D0 - LAT(K)
         ELSE
-         COLAT(K) = 90.D0 + DABS(LAT)
+         COLAT(K) = 90.D0 + DABS(LAT(K))
         END IF
 C       ----------------------------------------------------------------
-        IF (LONG.GE.0.D0) THEN
-         ELONG(K) = LONG
+        IF (LONG(K).GE.0.D0) THEN
+         ELONG(K) = LONG(K)
         ELSE
-         ELONG(K) = 360.D0 - DABS(LONG)
+         ELONG(K) = 360.D0 - DABS(LONG(K))
         END IF
 C       ----------------------------------------------------------------
         COLAT(K) = COLAT(K)*PI/180.D0
         ELONG(K) = ELONG(K)*PI/180.D0
-            Z(K) = H*1.D-3
+            Z(K) = H(K)*1.D-3
 C       ----------------------------------------------------------------
        END IF
        K = K + 1
@@ -190,7 +190,20 @@ C      ARCHIVOS DE SALIDA
 C-----------------------------------------------------------------------
        DATENUM = JD-JD0-1.D0
        WRITE(CHDIA,'(I6)') INT(DATENUM)
-       WRITE(CHHORA,'(I5)') INT((DATENUM - INT(DATENUM))*1D5)
+       TIMENUM = INT((DATENUM - INT(DATENUM))*1D5)
+       IF (TIMENUM.LT.10) THEN 
+            WRITE(CHHORA,'(I1)') TIMENUM
+       ELSE IF ((TIMENUM.GE.10).AND.(TIMENUM.LT.100)) THEN
+            WRITE(CHHORA,'(I2)') TIMENUM
+       ELSE IF ((TIMENUM.GE.100).AND.(TIMENUM.LT.1000)) THEN
+            WRITE(CHHORA,'(I3)') TIMENUM
+       ELSE IF ((TIMENUM.GE.1000).AND.(TIMENUM.LT.10000)) THEN
+            WRITE(CHHORA,'(I4)') TIMENUM
+       ELSE IF ((TIMENUM.GE.10000).AND.(TIMENUM.LT.100000)) THEN
+            WRITE(CHHORA,'(I5)') TIMENUM
+       ELSE 
+            WRITE(CHHORA,'(I6)') TIMENUM
+       END IF
 C      -----------------------------------------------------------------
        IF (TRIM(PATHOUT).EQ.'.') THEN
         OPEN(UNIT=12,FILE='MARTESOL_'//TRIM(CHDIA)//'-'//TRIM(CHHORA)//
@@ -254,7 +267,7 @@ C       ----------------------------------------------------------------
 C       ESCRITURA EN ARCHIVO DE SALIDA
 C       ----------------------------------------------------------------
 C                     1    2  3   4   5
-        WRITE(12,10) LONG,LAT,AC,ALT,DMS
+        WRITE(12,10) LONG(K),LAT(K),AC,ALT,DMS
 C       ----------------------------------------------------------------
        END DO
        CLOSE(UNIT=12)
